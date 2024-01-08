@@ -1,5 +1,6 @@
 import requests
 import json
+import os
 
 def authenticate(api_key):
     headers = {
@@ -8,17 +9,16 @@ def authenticate(api_key):
     }
     return headers
 
-def start_miner(farm_id, worker_id, headers):
-    url = f'https://api2.hiveos.farm/api/v2/farms/{farm_id}/workers/{worker_id}/actions'
-    data = {"action": "start"}
-    response = requests.post(url, headers=headers, data=json.dumps(data))
+def start_miner(hub, hub_id):
+    hub.turnon(hub_id)
     with open('miner_state.txt', 'w') as f:
         f.write('started')
-    return response.json()
 
 def stop_miner(farm_id, worker_id, headers):
-    url = f'https://api2.hiveos.farm/api/v2/farms/{farm_id}/workers/{worker_id}/actions'
-    data = {"action": "stop"}
+    farm_id = os.environ.get("HIVEOS_FARM_ID")
+    worker_id = os.environ.get("HIVEOS_WORKER_ID")
+    url = f'https://api2.hiveos.farm/api/v2/farms/{farm_id}/workers/{worker_id}/command'
+    data = {'command': 'shutdown'}
     response = requests.post(url, headers=headers, data=json.dumps(data))
     with open('miner_state.txt', 'w') as f:
         f.write('stopped')

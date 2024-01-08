@@ -13,37 +13,68 @@ def main():
   api_key = os.environ.get("HIVEOS_API_KEY")
   farm_id = os.environ.get("HIVEOS_FARM_ID")
   worker_id = os.environ.get("HIVEOS_WORKER_ID")
-  worker_consumption = os.environ.get("WORKER_CONSUMPTION")
+  worker_consumption = int(os.environ.get("WORKER_CONSUMPTION"))
+  kaku_plug_id = int(os.environ.get("KAKU_PLUG_ADRESS"))
 
   headers = authenticate(api_key)
 
   p1_module = None
+  
+  # Get all devices
   for i in hub.devices():
     print("%s -> %s" % (i.name(), hub.get_device_status(i)))
     if i.name() == "P1 Module":
       p1_module = i._id
-
+  
+  # Main logic
   try:
     current = hub.get_device_check(p1_module)
     if len(current) > 5:
-      timestr = time.strftime("%Y-%m-%d %H:%M:%S", time.gmtime())
+      # Get the current production and consumption
       consumption = int(current[4])
       production  = int(current[5])
+      total_usage = production - consumption
       
-      print("%s : Consumption %d W - Production %d W" % (timestr, consumption, production))
+      # Calculate the total availabilty
+      total_availabilty = total_usage - worker_consumption
+      #total_availabilty = 1
       
-      if production - consumption >= worker_consumption:
+      # If the total availabilty is positive, start the miner
+      if total_availabilty >= 0:
+        print("Hit power trigger")
         try:
             with open('miner_state.txt', 'r') as f:
                 state = f.read().strip()
-        except FileNotFoundError:
+
+                # If the miner is already started, do nothing
+                if state == 'started':
+                  print("miner already started")
+
+                # If the miner is stopped, start it  
+                elif state == 'stopped':
+                  print("starting miner")
+                  start_miner(hub, kaku_plug_id)
+
+        except FileNotFoundError as e:
+            print(e)
             state = 'stopped'
-        if state == 'started':
-            start_miner(farm_id, worker_id, headers)
-        elif state == 'stopped':
-            stop_miner(farm_id, worker_id, headers)
+      
+      # If the total availabilty is negative, stop the miner
+      else:
+        print("stopping miner, not enough power")
+        stop_miner(farm_id, worker_id, headers)
+
+        print("waiting 20 seconds for the miner to power down")
+        time.sleep(20)
+        
+        print("turning off KaKu plug")
+        hub.turnoff(kaku_plug_id)
+
+    # If the data is not available, do nothing
     else:
-      print("reply too short")
+      print("not getting p1 data")
+  
+  # If something goes wrong, do nothing
   except Exception as e:
     print("something went really wrong")
     print(e)
