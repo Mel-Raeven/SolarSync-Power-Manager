@@ -5,7 +5,9 @@ This project was made because I wanted my HiveOS miner to start and stop mining 
 
 ## What do you need to use this?
 
-- KlikAanKlikUit smart plug + hub + p1 meter
+- KlikAanKlikUit smart plug
+- IC2000 hub (to my knowledge this will only work with the IC2000)
+- Smart P1 meter attatched to your KaKu hub
 - HiveOS farm (duh)
 
 ## Installation guide
