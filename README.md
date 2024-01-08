@@ -17,3 +17,8 @@ This project was made because I wanted my HiveOS miner to start and stop mining 
 3. (optional) make a pyenv if you want
 4. install requirements: ```pip install -r requirements.txt```
 5. run `python main.py`
+
+
+## Acknowledgements
+
+ - [KaKu core](https://github.com/Stijn-Jacobs/ICS2000-Python)
