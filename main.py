@@ -61,14 +61,19 @@ def main():
       
       # If the total availabilty is negative, stop the miner
       else:
-        print("stopping miner, not enough power")
-        stop_miner(farm_id, worker_id, headers)
+        with open('miner_state.txt', 'r') as f:
+          state = f.read().strip()
+          if state == 'started':
+            print("stopping miner, not enough power")
+            stop_miner(farm_id, worker_id, headers)
 
-        print("waiting 20 seconds for the miner to power down")
-        time.sleep(20)
-        
-        print("turning off KaKu plug")
-        hub.turnoff(kaku_plug_id)
+            print("waiting 20 seconds for the miner to power down")
+            time.sleep(20)
+            
+            print("turning off KaKu plug")
+            hub.turnoff(kaku_plug_id)
+          else:
+            print("doing nothing, miner already stopped and not enough power")
 
     # If the data is not available, do nothing
     else:
