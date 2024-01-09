@@ -15,7 +15,7 @@ This project was made because I wanted my HiveOS miner to start and stop mining 
 1. rename the `.env-example` to `.env`
 2. fill in the fields of the `.env` file
 3. (optional) make a pyenv if you want
-4. install requirements: ```pip install -r requirements.txt```
+4. install requirements: ```pip install -r requirements.txt``` OR if you use pixi just do a ```pixi install``` (this will remove the need for a pyenv)
 5. run `python main.py`
 
 
