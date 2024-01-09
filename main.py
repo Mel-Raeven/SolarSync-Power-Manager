@@ -26,6 +26,7 @@ def main():
     if i.name() == "P1 Module":
       p1_module = i._id
   
+
   # Main logic
   try:
     current = hub.get_device_check(p1_module)
@@ -37,43 +38,35 @@ def main():
       
       # Calculate the total availabilty
       total_availabilty = total_usage - worker_consumption
-      #total_availabilty = 1
       
+      # Get the current state of the miner
+      state = miner_state(farm_id, headers)
+
       # If the total availabilty is positive, start the miner
       if total_availabilty >= 0:
         print("Hit power trigger")
-        try:
-            with open('miner_state.txt', 'r') as f:
-                state = f.read().strip()
+        # If the miner is already started, do nothing
+        if state == True:
+          print("miner already started")
 
-                # If the miner is already started, do nothing
-                if state == 'started':
-                  print("miner already started")
-
-                # If the miner is stopped, start it  
-                elif state == 'stopped':
-                  print("starting miner")
-                  start_miner(hub, kaku_plug_id)
-
-        except FileNotFoundError as e:
-            print(e)
-            state = 'stopped'
+        # If the miner is stopped, start it  
+        else:
+          print("starting miner")
+          start_miner(hub, kaku_plug_id)
       
       # If the total availabilty is negative, stop the miner
       else:
-        with open('miner_state.txt', 'r') as f:
-          state = f.read().strip()
-          if state == 'started':
-            print("stopping miner, not enough power")
-            stop_miner(farm_id, worker_id, headers)
+        if state == True:
+          print("stopping miner, not enough power")
+          stop_miner(farm_id, worker_id, headers)
 
-            print("waiting 20 seconds for the miner to power down")
-            time.sleep(20)
-            
-            print("turning off KaKu plug")
-            hub.turnoff(kaku_plug_id)
-          else:
-            print("doing nothing, miner already stopped and not enough power")
+          print("waiting 20 seconds for the miner to power down")
+          time.sleep(20)
+          
+          print("turning off KaKu plug")
+          hub.turnoff(kaku_plug_id)
+        else:
+          print("doing nothing, miner already stopped and not enough power")
 
     # If the data is not available, do nothing
     else:
