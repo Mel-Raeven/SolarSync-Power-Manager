@@ -53,7 +53,7 @@ def main():
         else:
           print("starting miner")
           hub.turnoff(kaku_plug_id)
-          sleep(5)
+          time.sleep(5)
           start_miner(hub, kaku_plug_id)
       
       # If the total availabilty is negative, stop the miner
