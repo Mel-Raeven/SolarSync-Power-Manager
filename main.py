@@ -32,12 +32,10 @@ def main():
     current = hub.get_device_check(p1_module)
     if len(current) > 5:
       # Get the current production and consumption
-      consumption = int(current[4])
       production  = int(current[5])
-      total_usage = production - consumption
       
       # Calculate the total availabilty
-      total_availabilty = total_usage - worker_consumption
+      total_availabilty = production - worker_consumption
       
       # Get the current state of the miner
       state = miner_state(farm_id, headers)
