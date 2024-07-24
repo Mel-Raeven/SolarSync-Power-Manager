@@ -1,11 +1,26 @@
-import time
-import os
 from ics2000.Core import *
 from envLoader import loadEnvFile
+from logic.Power import scan_power
 from api.Core import start_api
+import schedule, time
+import json
+import threading
+import sys
+
+def power_schedule():
+  schedule.every(10).minutes.do(scan_power)
+  while True:
+    schedule.run_pending()
+    time.sleep(1)
 
 def main():
-  start_api()
+  if __name__ == "__main__":
+    # Start the API in a separate thread
+    api_thread = threading.Thread(target=power_schedule)
+    api_thread.start()
+
+    start_api()
+
 
 # def main():
 #   loadEnvFile()

@@ -11,6 +11,9 @@ class Device:
 
     def name(self):
         return self._name
+    
+    def id(self):
+        return self._id
 
     def turnoff(self):
         cmd = self._hub.getcmdswitch(self._id, False)
