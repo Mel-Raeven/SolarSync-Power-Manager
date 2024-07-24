@@ -1,0 +1,1 @@
+{"plugs": [{"name": "plug1", "type": "plug", "config": {"pin": 1}}, {"name": "car", "type": "KaKu", "config": "124523"}]}

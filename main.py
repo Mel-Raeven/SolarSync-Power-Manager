@@ -1,9 +1,9 @@
 import time
 import os
 from ics2000.Core import *
-from HiveOS.Core import *
 from envLoader import loadEnvFile
-from api import start_api
+from api.Core import start_api
+
 def main():
   start_api()
 
