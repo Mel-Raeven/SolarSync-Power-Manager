@@ -1,4 +1,6 @@
 from flask import Flask, Response, request, jsonify
+
+from flask_cors import CORS, cross_origin
 from api.Cred import *
 from logic.KaKuConnector import KaKuHubConnector, KaKuPlugs
 from logic.Plugs import ListPlugs
@@ -6,6 +8,7 @@ import json
 import os
 
 app = Flask(__name__)
+CORS(app)
 config_files = ['config/added-plugs.json', 'config/supported-devices.json']
 
 def check_config_files_exist(file_paths):
@@ -36,7 +39,7 @@ def refresh_plugs():
     plugs = ListPlugs()  # Replace with your actual list of plugs
     print (plugs)
     # Return the list of plugs as a response
-    return jsonify(plugs)
+    return jsonify({"plugs": plugs})
 
 @app.route(rule='/add_plugs', methods=['POST'])
 def add_plugs():
@@ -149,8 +152,9 @@ def list_available_devices() -> Response:
     return jsonify(supported_devices)
 
 def start_api() -> None:
-    app.run(ssl_context='adhoc')
-
+    #app.run(ssl_context='adhoc')
+    app.run()
+    
 if __name__ == '__main__':
     existence_check = check_config_files_exist(config_files)
     if existence_check is None:
