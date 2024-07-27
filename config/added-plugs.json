@@ -1,1 +1,1 @@
-{"plugs": [{"name": "car3", "type": "KaKu", "id": "124523", "usage": 123, "priority": 1}]}
+{"plugs": [{"name": "car3", "type": "KaKu", "id": "124523", "usage": 123, "priority": 1}, {"type": "KaKu", "name": "Verlichting", "id": 18078953, "priority": 0, "usage": 0}, {"type": "KaKu", "name": "Fontein watertafel", "id": 20520528, "priority": 2, "usage": 0}, {"type": "KaKu", "name": "Kookeiland TL", "id": 20543883, "priority": 0, "usage": 0}]}

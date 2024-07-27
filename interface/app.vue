@@ -1,30 +1,44 @@
 <template>
   <NuxtLayout >
     <v-app >
-      <v-app-bar :elevation="1" style="position: sticky;">
+      <v-app-bar :elevation="0" style="position: sticky;">
         <template v-slot:prepend>
           <v-app-bar-nav-icon></v-app-bar-nav-icon>
         </template>
-        <v-app-bar-title>Application Bar</v-app-bar-title>
+        
+        <v-app-bar-title>SolarSync management interface</v-app-bar-title>
+        <v-checkbox class="pt-3"
+          v-model="$vuetify.theme.dark"
+          color="purple"
+          false-icon="mdi-theme-light-dark"
+          true-icon="mdi-theme-light-dark"
+          @click="toggleTheme()"
+        >
+        </v-checkbox>
+      
       </v-app-bar>
       <NuxtPage :class="backgroundClass"/>
+      
     </v-app>
   </NuxtLayout>
 </template>
 
-<script>
-export default {
-  computed: {
-    backgroundClass() {
-      const currentTime = new Date().getHours();
-      if (currentTime >= 18 || currentTime < 6) {
-        return 'black-orange-gradient';
-      } else {
-        return 'blue-gradient';
-      }
-    }
-  }
+<script setup>
+import { useTheme } from 'vuetify'
+
+const theme = useTheme()
+
+function toggleTheme () {
+  theme.global.name.value = theme.global.current.value.dark ? 'light' : 'dark'
 }
+
+const currentTime = new Date().getHours();
+if (currentTime >= 18 || currentTime < 6) {
+  theme.global.name.value = 'dark';
+} else {
+  theme.global.name.value = 'light';
+}
+
 </script>
 
 <style>

@@ -32,6 +32,14 @@ def list_plugs():
 
     # Return the list of plugs as a response
     return jsonify(plugs)
+    # Endpoint to return the added plugs
+
+@app.route(rule='/added_plugs', methods=['GET'])
+def added_plugs():
+    # Read the list of added plugs from the JSON file
+    with open(file='config/added-plugs.json') as file:
+        added_plugs = json.load(file)
+        return jsonify(added_plugs)
 
 @app.route(rule='/refresh_plugs', methods=['GET'])
 def refresh_plugs():
@@ -47,22 +55,28 @@ def add_plugs():
     plugs_data = request.json
     print(plugs_data)
     # Check if the required fields are present in the request
-    if 'name' not in plugs_data or 'type' not in plugs_data or 'id' not in plugs_data:
-        return jsonify({'error': 'Missing required fields'}), 400
+    if not isinstance(plugs_data, list):
+        return jsonify({'error': 'Invalid request format. Expected a list of plugs'}), 400
 
     # Read the existing plugs from the JSON file
     with open(file='config/added-plugs.json') as file:
         existing_plugs = json.load(file)
 
-    # Check if the plug with the same name or config already exists
-    for plug in existing_plugs['plugs']:
-        if plug['name'] == plugs_data['name']:
-            return jsonify({'error': 'Plug with the same name already exists'}), 400
-        if 'id' in plug and plug['id'] == plugs_data['id']:
-            return jsonify({'error': 'Plug with the same config already exists'}), 400
+    # Add the new plugs to the existing plugs, ignoring duplicates
+    for plug_data in plugs_data:
+        if 'name' not in plug_data or 'type' not in plug_data or 'id' not in plug_data:
+            return jsonify({'error': 'Missing required fields in plug data'}), 400
 
-    # Add the new plug to the existing plugs
-    existing_plugs['plugs'].append(plugs_data)
+        # Check if the plug already exists
+        plug_exists = False
+        for plug in existing_plugs['plugs']:
+            if plug['name'] == plug_data['name'] or ('id' in plug and plug['id'] == plug_data['id']):
+                plug_exists = True
+                break
+
+        # If the plug doesn't exist, add it to the existing plugs
+        if not plug_exists:
+            existing_plugs['plugs'].append(plug_data)
 
     # Write the updated plugs to the JSON file
     with open(file='config/added-plugs.json', mode='w') as file:

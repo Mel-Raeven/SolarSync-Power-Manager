@@ -10,11 +10,13 @@
     ></v-btn>
   </div>
 
-  <v-data-table :items="items" :loading="loading">
+  <v-data-table     v-model="selected" :items="items" :loading="loading" :headers="headers"     item-value="name" show-select     return-object>
     <template v-slot:loading>
       <v-skeleton-loader type="table-row@10"></v-skeleton-loader>
     </template>
   </v-data-table>
+
+  <v-btn @click="checkIfSelected()"></v-btn>
 </div>
 </template>  
 
@@ -23,9 +25,10 @@
     data() {
       return {
         loading: true,
+        selected: [],
         headers: [
-          { text: 'Name', value: 'name' },
-          { text: 'Type', value: 'type' },
+          { title: 'Name', key: 'name', sortable: true },
+          { title: 'Type', key: 'type', sortable: true },
         ],
         items: [],
       };
@@ -45,6 +48,28 @@
         });
         
       },
+      checkIfSelected() {
+        const updatedSelected = this.selected.map(item => ({
+          ...item,
+          priority: 0,
+          usage: 0
+        }));
+
+        fetch('http://127.0.0.1:5000/add_plugs', {
+          method: 'POST',
+          headers: {
+        'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(updatedSelected)
+        })
+        .then(response => response.json())
+        .then(data => {
+          console.log('Selection submitted:', data);
+        })
+        .catch(error => {
+          console.error('Error submitting selection:', error);
+        });
+      }
     },
     mounted() {
       fetch('http://127.0.0.1:5000/list_plugs')
@@ -62,7 +87,8 @@
   </script>
   
   <style scoped>
-  h1 {
-    color: blue;
+
+  ::v-deep .v-data-table-header__content span { 
+    font-weight: bold !important;
   }
   </style>
