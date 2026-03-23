@@ -1,5 +1,36 @@
+# Environment
 .env
-env/
-__pycache__/
-.pixi
+*.env
 
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+.venv/
+env/
+.ruff_cache/
+
+# Node
+node_modules/
+
+# Laravel
+solarsync/frontend/vendor/
+solarsync/frontend/.env
+solarsync/frontend/storage/logs/*.log
+solarsync/frontend/storage/framework/cache/
+solarsync/frontend/storage/framework/sessions/
+solarsync/frontend/storage/framework/views/
+solarsync/frontend/bootstrap/cache/*.php
+
+# SQLite databases (local dev only)
+*.sqlite
+*.sqlite3
+*.sqlite-shm
+*.sqlite-wal
+
+# OS / editors
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
