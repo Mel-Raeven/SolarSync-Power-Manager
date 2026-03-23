@@ -9,7 +9,7 @@
     $isEdit          = ! is_null($appliance);
     $oldMode         = old('schedule_mode', $isEdit ? $appliance['schedule_mode'] : 'solar_only');
     $oldHubId        = old('hub_id',        $isEdit ? $appliance['hub_id']        : '');
-    $oldPlugId       = old('plug_id',       $isEdit ? $appliance['plug_id']       : '');
+    $oldPlugId       = old('plug_id',       $isEdit ? ($appliance['plug_entity_id'] ?? $appliance['plug_id'] ?? '') : '');
     $oldPriority     = old('priority',      $isEdit ? ($appliance['priority'] ?? 1) : 1);
     $oldName         = old('name',          $isEdit ? $appliance['name']          : '');
     $oldWattDraw     = old('watt_draw',     $isEdit ? $appliance['watt_draw']     : '');

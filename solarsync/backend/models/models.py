@@ -1,8 +1,6 @@
-from __future__ import annotations
-
 import enum
 from datetime import datetime, time
-from typing import Optional
+from typing import List, Optional
 
 from sqlmodel import Field, Relationship, SQLModel
 
@@ -67,7 +65,7 @@ class HubBase(SQLModel):
 
 class Hub(HubBase, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
-    appliances: list["Appliance"] = Relationship(back_populates="hub")
+    appliances: List["Appliance"] = Relationship(back_populates="hub")
 
 
 class HubCreate(HubBase):
@@ -143,7 +141,7 @@ class Appliance(ApplianceBase, table=True):
     status: ApplianceStatus = Field(default=ApplianceStatus.IDLE)
     last_changed_at: Optional[datetime] = Field(default=None)
     hub: Optional[Hub] = Relationship(back_populates="appliances")
-    power_logs: list["PowerLog"] = Relationship(back_populates="appliance")
+    power_logs: List["PowerLog"] = Relationship(back_populates="appliance")
 
 
 class ApplianceCreate(ApplianceBase):
