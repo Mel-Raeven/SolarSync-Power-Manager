@@ -1,0 +1,123 @@
+version: "3.9"
+
+# ============================================================
+# SolarSync Power Manager — Docker Compose (development / local)
+# ============================================================
+# For production (with ghcr.io images + Watchtower),
+# use: docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+
+services:
+
+  # ----------------------------------------------------------
+  # Nginx — TLS termination + reverse proxy
+  # ----------------------------------------------------------
+  nginx:
+    image: nginx:1.27-alpine
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/certs:/etc/nginx/certs:ro
+      - frontend_public:/var/www/public:ro
+    depends_on:
+      - frontend
+      - backend
+    networks:
+      - solarsync
+
+  # ----------------------------------------------------------
+  # FastAPI backend — solar engine + REST API
+  # ----------------------------------------------------------
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    env_file: .env
+    volumes:
+      - ./backend:/app
+      - solarsync_data:/data
+    networks:
+      - solarsync
+    depends_on:
+      - mosquitto
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+  # ----------------------------------------------------------
+  # Laravel frontend — PHP-FPM + UI
+  # ----------------------------------------------------------
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      # Tell Laravel where the FastAPI backend is (internal Docker DNS)
+      BACKEND_URL: http://backend:8000
+    volumes:
+      - ./frontend:/var/www
+      - solarsync_data:/data
+      - frontend_public:/var/www/public
+    networks:
+      - solarsync
+    depends_on:
+      - backend
+
+  # ----------------------------------------------------------
+  # Mosquitto — MQTT broker for Zigbee2MQTT / Shelly devices
+  # ----------------------------------------------------------
+  mosquitto:
+    image: eclipse-mosquitto:2
+    restart: unless-stopped
+    volumes:
+      - ./mosquitto/mosquitto.conf:/mosquitto/config/mosquitto.conf:ro
+      - mosquitto_data:/mosquitto/data
+      - mosquitto_logs:/mosquitto/log
+    ports:
+      - "1883:1883"
+    networks:
+      - solarsync
+
+  # ----------------------------------------------------------
+  # Zigbee2MQTT — bridges Zigbee devices to MQTT
+  # Requires a Zigbee USB adapter (e.g. ConBee II, Sonoff Zigbee 3.0)
+  # ----------------------------------------------------------
+  zigbee2mqtt:
+    image: koenkk/zigbee2mqtt:latest
+    restart: unless-stopped
+    volumes:
+      - ./zigbee2mqtt:/app/data
+      - /run/udev:/run/udev:ro
+    environment:
+      TZ: Europe/Amsterdam
+    # Uncomment and set the correct device path for your Zigbee adapter:
+    # devices:
+    #   - /dev/ttyUSB0:/dev/ttyUSB0
+    depends_on:
+      - mosquitto
+    networks:
+      - solarsync
+    profiles:
+      - zigbee  # Only starts when: docker compose --profile zigbee up
+
+networks:
+  solarsync:
+    driver: bridge
+
+volumes:
+  solarsync_data:
+    driver: local
+  mosquitto_data:
+    driver: local
+  mosquitto_logs:
+    driver: local
+  frontend_public:
+    driver: local
