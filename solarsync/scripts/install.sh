@@ -74,44 +74,77 @@ else
 fi
 
 # --------------------------------------------------------------------------
-# 4. Create .env from .env.example (if not already present)
+# 4. Create and fully populate .env (if not already present)
 # --------------------------------------------------------------------------
 ENV_FILE="${SOLARSYNC_DIR}/.env"
 EXAMPLE_FILE="${SOLARSYNC_DIR}/.env.example"
 
 if [[ -f "${ENV_FILE}" ]]; then
-  info ".env already exists — skipping (edit ${ENV_FILE} manually if needed)."
+  info ".env already exists — skipping secret generation."
 else
   if [[ ! -f "${EXAMPLE_FILE}" ]]; then
     error ".env.example not found at ${EXAMPLE_FILE}"
   fi
   cp "${EXAMPLE_FILE}" "${ENV_FILE}"
-  success "Created ${ENV_FILE} from .env.example"
 
-  # Prompt for the most important values
+  # -- Web login credentials --
   echo ""
-  warn "Please configure the following required values in ${ENV_FILE}:"
+  info "Set your web login credentials (used to access the SolarSync dashboard):"
   echo ""
 
-  read -rp "  SolarSync username (for web login) [admin]: " SS_USER
+  read -rp "  Username [admin]: " SS_USER
   SS_USER="${SS_USER:-admin}"
 
-  read -rsp "  SolarSync password: " SS_PASS
-  echo ""
-  if [[ -z "${SS_PASS}" ]]; then
-    error "Password cannot be empty."
-  fi
+  while true; do
+    read -rsp "  Password: " SS_PASS
+    echo ""
+    [[ -n "${SS_PASS}" ]] && break
+    warn "  Password cannot be empty. Try again."
+  done
 
-  # Replace placeholders in .env
   sed -i "s|^SOLARSYNC_USERNAME=.*|SOLARSYNC_USERNAME=${SS_USER}|" "${ENV_FILE}"
   sed -i "s|^SOLARSYNC_PASSWORD=.*|SOLARSYNC_PASSWORD=${SS_PASS}|" "${ENV_FILE}"
+  success "Web login credentials saved."
 
-  # Auto-generate internal API key (shared secret between Laravel and FastAPI)
+  # -- Auto-generate internal API key (Laravel <-> FastAPI shared secret) --
   INTERNAL_API_KEY=$(openssl rand -hex 32)
   sed -i "s|^INTERNAL_API_KEY=.*|INTERNAL_API_KEY=${INTERNAL_API_KEY}|" "${ENV_FILE}"
   success "Internal API key auto-generated."
 
-  success "Credentials saved to ${ENV_FILE}"
+  # -- Auto-generate Laravel APP_KEY (base64:random 32 bytes) --
+  APP_KEY="base64:$(openssl rand -base64 32)"
+  sed -i "s|^APP_KEY=.*|APP_KEY=${APP_KEY}|" "${ENV_FILE}"
+  success "Laravel application key auto-generated."
+fi
+
+# --------------------------------------------------------------------------
+# 4b. Populate frontend/.env from root .env (if not already present)
+# --------------------------------------------------------------------------
+FRONTEND_ENV="${SOLARSYNC_DIR}/frontend/.env"
+FRONTEND_EXAMPLE="${SOLARSYNC_DIR}/frontend/.env.example"
+
+if [[ -f "${FRONTEND_ENV}" ]]; then
+  info "frontend/.env already exists — skipping."
+else
+  if [[ ! -f "${FRONTEND_EXAMPLE}" ]]; then
+    error "frontend/.env.example not found at ${FRONTEND_EXAMPLE}"
+  fi
+  cp "${FRONTEND_EXAMPLE}" "${FRONTEND_ENV}"
+
+  # Pull the generated values from the root .env and write them into frontend/.env
+  _read_env() { grep -E "^${1}=" "${ENV_FILE}" | cut -d= -f2- | tr -d '"' || true; }
+
+  APP_KEY_VAL=$(_read_env APP_KEY)
+  SS_USER_VAL=$(_read_env SOLARSYNC_USERNAME)
+  SS_PASS_VAL=$(_read_env SOLARSYNC_PASSWORD)
+  INTERNAL_KEY_VAL=$(_read_env INTERNAL_API_KEY)
+
+  sed -i "s|^APP_KEY=.*|APP_KEY=${APP_KEY_VAL}|" "${FRONTEND_ENV}"
+  sed -i "s|^SOLARSYNC_USERNAME=.*|SOLARSYNC_USERNAME=${SS_USER_VAL}|" "${FRONTEND_ENV}"
+  sed -i "s|^SOLARSYNC_PASSWORD=.*|SOLARSYNC_PASSWORD=${SS_PASS_VAL}|" "${FRONTEND_ENV}"
+  sed -i "s|^INTERNAL_API_KEY=.*|INTERNAL_API_KEY=${INTERNAL_KEY_VAL}|" "${FRONTEND_ENV}"
+
+  success "frontend/.env populated."
 fi
 
 # --------------------------------------------------------------------------
@@ -134,20 +167,19 @@ MQTT_PASSWD_FILE="${SOLARSYNC_DIR}/mosquitto/passwd"
 if [[ -f "${MQTT_PASSWD_FILE}" ]]; then
   info "Mosquitto password file already present — skipping."
 else
-  # Auto-generate random MQTT credentials — the user never needs to know these.
-  # They are only used internally between Docker services.
+  # Auto-generate random MQTT credentials — internal between Docker services only.
   MQTT_USERNAME="solarsync"
   MQTT_PASSWORD=$(openssl rand -hex 24)
 
   sed -i "s|^MQTT_USERNAME=.*|MQTT_USERNAME=${MQTT_USERNAME}|" "${ENV_FILE}"
   sed -i "s|^MQTT_PASSWORD=.*|MQTT_PASSWORD=${MQTT_PASSWORD}|" "${ENV_FILE}"
 
-  info "Generating Mosquitto password file at ${MQTT_PASSWD_FILE}..."
+  info "Generating Mosquitto password file..."
   docker run --rm \
     -v "${SOLARSYNC_DIR}/mosquitto:/mosquitto" \
     eclipse-mosquitto:2 \
     sh -c "mosquitto_passwd -b -c /mosquitto/passwd '${MQTT_USERNAME}' '${MQTT_PASSWORD}'"
-  success "Mosquitto credentials auto-generated and password file created."
+  success "MQTT credentials auto-generated."
 fi
 
 # --------------------------------------------------------------------------
