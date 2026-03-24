@@ -5,7 +5,8 @@
 
 set -euo pipefail
 
-CERT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../nginx/certs" && pwd)"
+CERT_DIR="$(dirname "${BASH_SOURCE[0]}")/../nginx/certs"
+CERT_DIR="$(realpath -m "$CERT_DIR")"
 CERT_FILE="$CERT_DIR/solarsync.crt"
 KEY_FILE="$CERT_DIR/solarsync.key"
 
