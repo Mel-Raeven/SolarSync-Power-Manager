@@ -30,7 +30,8 @@ The script will:
 2. Clone this repository to `~/solarsync`
 3. Prompt for a username and password for the web interface
 4. Generate a self-signed TLS certificate
-5. Pull the latest images from ghcr.io and start all services
+5. Prompt for MQTT credentials and generate the Mosquitto password file
+6. Pull the latest images from ghcr.io and start all services
 
 Open `https://<pi-ip-address>` in your browser and follow the onboarding wizard.
 
@@ -56,13 +57,17 @@ Key variables:
 
 | Variable | Description |
 |---|---|
-| `SOLARSYNC_USERNAME` | Web login username (default: `admin`) |
-| `SOLARSYNC_PASSWORD` | Web login password — **change this** |
+| `SOLARSYNC_USERNAME` | Web login username — **required** |
+| `SOLARSYNC_PASSWORD` | Web login password — **required** |
+| `INTERNAL_API_KEY` | Shared secret between Laravel and FastAPI — generate with `openssl rand -hex 32` |
+| `ALLOWED_ORIGINS` | Comma-separated list of allowed CORS origins (e.g. `https://your-pi-hostname`) |
 | `KAKU_MAC_ADDRESS` | MAC address of your ICS2000 hub |
 | `KAKU_EMAIL` | KaKu account email |
 | `KAKU_PASSWORD` | KaKu account password |
 | `SOLAREDGE_API_KEY` | SolarEdge API key (optional) |
 | `SOLAREDGE_SITE_ID` | SolarEdge site ID (optional) |
+| `MQTT_USERNAME` | MQTT broker username |
+| `MQTT_PASSWORD` | MQTT broker password |
 | `POLL_INTERVAL_SECONDS` | How often the solar engine runs (default: `300`) |
 
 ### 3. Generate TLS certificate
@@ -136,6 +141,8 @@ Browser ──HTTPS──► Nginx (443)
 | Scheduler | APScheduler (inside FastAPI) |
 | Database | SQLite via SQLModel |
 | Auth | Laravel Sanctum (single household credential) |
+| API Auth | Shared secret header (`X-Internal-API-Key`) between Laravel and FastAPI |
+| MQTT | Eclipse Mosquitto (password-protected, internal network only) |
 | Container | Docker Compose (arm64) |
 | TLS | Nginx reverse proxy + self-signed cert |
 | Auto-update | Watchtower |
