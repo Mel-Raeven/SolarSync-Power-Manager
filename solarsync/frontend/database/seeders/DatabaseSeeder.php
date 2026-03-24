@@ -9,26 +9,21 @@ use Illuminate\Support\Facades\Hash;
 class DatabaseSeeder extends Seeder
 {
     /**
-     * Create the single household user from environment variables.
+     * Seed the default admin user.
      *
-     * SOLARSYNC_USERNAME and SOLARSYNC_PASSWORD must be set in .env
-     * before running migrations+seed on first boot.
+     * Credentials are intentionally admin/admin with must_change_password=true.
+     * The user is forced to set their own password on first login before they
+     * can access anything else in the application.
      */
     public function run(): void
     {
-        $username = env('SOLARSYNC_USERNAME') ?? throw new \RuntimeException(
-            'SOLARSYNC_USERNAME is not set in .env — set it before running db:seed.'
-        );
-        $password = env('SOLARSYNC_PASSWORD') ?? throw new \RuntimeException(
-            'SOLARSYNC_PASSWORD is not set in .env — set it before running db:seed.'
-        );
-
         User::updateOrCreate(
-            ['name' => $username],
+            ['name' => 'admin'],
             [
-                'name'     => $username,
-                'email'    => $username . '@solarsync.local',
-                'password' => Hash::make($password),
+                'name'                 => 'admin',
+                'email'                => 'admin@solarsync.local',
+                'password'             => Hash::make('admin'),
+                'must_change_password' => true,
             ]
         );
     }

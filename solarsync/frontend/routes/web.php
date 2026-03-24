@@ -18,6 +18,10 @@ Route::middleware('auth')->group(function () {
 
     Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 
+    // First-run: force password change before accessing anything else
+    Route::get('/change-password',  [AuthController::class, 'showChangePassword'])->name('auth.change-password');
+    Route::post('/change-password', [AuthController::class, 'updatePassword'])->name('auth.change-password.update');
+
     // Root redirect: onboarding if not complete, else dashboard
     Route::get('/', [OnboardingController::class, 'index'])->name('home');
 

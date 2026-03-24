@@ -87,25 +87,6 @@ else
   fi
   cp "${EXAMPLE_FILE}" "${ENV_FILE}"
 
-  # -- Web login credentials --
-  echo ""
-  info "Set your web login credentials (used to access the SolarSync dashboard):"
-  echo ""
-
-  read -rp "  Username [admin]: " SS_USER
-  SS_USER="${SS_USER:-admin}"
-
-  while true; do
-    read -rsp "  Password: " SS_PASS
-    echo ""
-    [[ -n "${SS_PASS}" ]] && break
-    warn "  Password cannot be empty. Try again."
-  done
-
-  sed -i "s|^SOLARSYNC_USERNAME=.*|SOLARSYNC_USERNAME=${SS_USER}|" "${ENV_FILE}"
-  sed -i "s|^SOLARSYNC_PASSWORD=.*|SOLARSYNC_PASSWORD=${SS_PASS}|" "${ENV_FILE}"
-  success "Web login credentials saved."
-
   # -- Auto-generate internal API key (Laravel <-> FastAPI shared secret) --
   INTERNAL_API_KEY=$(openssl rand -hex 32)
   sed -i "s|^INTERNAL_API_KEY=.*|INTERNAL_API_KEY=${INTERNAL_API_KEY}|" "${ENV_FILE}"
@@ -135,13 +116,9 @@ else
   _read_env() { grep -E "^${1}=" "${ENV_FILE}" | cut -d= -f2- | tr -d '"' || true; }
 
   APP_KEY_VAL=$(_read_env APP_KEY)
-  SS_USER_VAL=$(_read_env SOLARSYNC_USERNAME)
-  SS_PASS_VAL=$(_read_env SOLARSYNC_PASSWORD)
   INTERNAL_KEY_VAL=$(_read_env INTERNAL_API_KEY)
 
   sed -i "s|^APP_KEY=.*|APP_KEY=${APP_KEY_VAL}|" "${FRONTEND_ENV}"
-  sed -i "s|^SOLARSYNC_USERNAME=.*|SOLARSYNC_USERNAME=${SS_USER_VAL}|" "${FRONTEND_ENV}"
-  sed -i "s|^SOLARSYNC_PASSWORD=.*|SOLARSYNC_PASSWORD=${SS_PASS_VAL}|" "${FRONTEND_ENV}"
   sed -i "s|^INTERNAL_API_KEY=.*|INTERNAL_API_KEY=${INTERNAL_KEY_VAL}|" "${FRONTEND_ENV}"
 
   success "frontend/.env populated."
