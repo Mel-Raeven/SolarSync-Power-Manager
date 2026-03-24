@@ -19,21 +19,19 @@ RUN npm run build
 # ----------------------------------------------------------------
 FROM php:8.4-fpm
 
-# Install system dependencies
+# Install system dependencies and PHP extensions via pre-built packages
+# (avoids slow from-source compilation under QEMU emulation)
 RUN apt-get update && apt-get install -y --no-install-recommends \
     git \
     curl \
-    libpng-dev \
-    libonig-dev \
-    libxml2-dev \
-    libzip-dev \
-    libsqlite3-dev \
     zip \
     unzip \
     && rm -rf /var/lib/apt/lists/*
 
-# Install PHP extensions required by Laravel
-RUN docker-php-ext-install \
+# Use install-php-extensions for fast pre-built extension installs
+ADD --chmod=0755 https://github.com/mlocati/docker-php-extension-installer/releases/latest/download/install-php-extensions /usr/local/bin/
+
+RUN install-php-extensions \
     pdo \
     pdo_sqlite \
     mbstring \
