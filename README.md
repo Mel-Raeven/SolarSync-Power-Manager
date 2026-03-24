@@ -16,6 +16,7 @@ Built for **Raspberry Pi 4/5 (arm64)**, but runs on any Linux machine with Docke
 - **Multiple plug types** — KaKu ICS2000 smart plugs and Zigbee devices via Zigbee2MQTT
 - **Automatic updates** — Watchtower polls ghcr.io and restarts containers on new releases
 - **HTTPS by default** — Nginx with a self-signed certificate (or bring your own)
+- **mDNS** — accessible at `https://solarsync.local` on your home network, no IP needed
 
 ---
 
@@ -27,13 +28,16 @@ curl -fsSL https://raw.githubusercontent.com/Mel-Raeven/SolarSync-Power-Manager/
 
 No configuration needed. The script runs fully automatically:
 
-1. Install Docker (if missing)
-2. Clone this repository to `~/solarsync`
-3. Auto-generate all internal secrets (`APP_KEY`, `INTERNAL_API_KEY`, MQTT credentials)
-4. Generate a self-signed TLS certificate
-5. Pull the latest images from ghcr.io and start all services
+1. Set the Pi's hostname to `solarsync` and enable mDNS (`avahi-daemon`)
+2. Install Docker (if missing)
+3. Clone this repository to `~/solarsync`
+4. Auto-generate all internal secrets (`APP_KEY`, `INTERNAL_API_KEY`, MQTT credentials)
+5. Generate a self-signed TLS certificate (includes `solarsync.local` as a SAN)
+6. Pull the latest images from ghcr.io and start all services
 
-Open `https://<pi-ip-address>` in your browser. The first time you log in with `admin` / `admin`, you will be prompted to set your own username and password before you can access anything. After that, follow the onboarding wizard to connect your energy source and smart plugs.
+Open **`https://solarsync.local`** in your browser. The first time you log in with `admin` / `admin`, you will be prompted to set your own username and password before you can access anything. After that, follow the onboarding wizard to connect your energy source and smart plugs.
+
+> **Note:** `solarsync.local` works on any device on the same network that supports mDNS — this includes macOS, iOS, Android, and most Linux desktops out of the box. Windows users may need to install [Bonjour Print Services](https://support.apple.com/kb/DL999).
 
 ---
 

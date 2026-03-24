@@ -41,6 +41,32 @@ OS=$(grep -E '^ID=' /etc/os-release 2>/dev/null | cut -d= -f2 | tr -d '"')
 info "OS: ${OS}, arch: ${ARCH}"
 
 # --------------------------------------------------------------------------
+# 2. Set hostname to 'solarsync' and enable mDNS (avahi)
+# --------------------------------------------------------------------------
+CURRENT_HOSTNAME=$(hostname)
+if [[ "${CURRENT_HOSTNAME}" != "solarsync" ]]; then
+  info "Setting hostname to 'solarsync'..."
+  echo "solarsync" | sudo tee /etc/hostname > /dev/null
+  sudo sed -i "s|127\.0\.1\.1.*|127.0.1.1\tsolarsync|" /etc/hosts
+  sudo hostname solarsync
+  success "Hostname set to 'solarsync'."
+else
+  success "Hostname is already 'solarsync'."
+fi
+
+if command -v avahi-daemon &>/dev/null; then
+  success "avahi-daemon already installed."
+else
+  info "Installing avahi-daemon for mDNS (solarsync.local)..."
+  sudo apt-get update -qq
+  sudo apt-get install -y avahi-daemon
+  success "avahi-daemon installed."
+fi
+
+sudo systemctl enable avahi-daemon --now 2>/dev/null || true
+success "SolarSync will be reachable at https://solarsync.local on your local network."
+
+# --------------------------------------------------------------------------
 # 2. Install Docker (if not present)
 # --------------------------------------------------------------------------
 if command -v docker &>/dev/null; then
@@ -177,8 +203,9 @@ docker compose \
 
 success "SolarSync is running!"
 echo ""
-echo "  Open https://$(hostname -I | awk '{print $1}') in your browser."
-echo "  (Accept the self-signed certificate warning.)"
+echo "  Open https://solarsync.local in your browser."
+echo "  (If solarsync.local doesn't resolve yet, use https://$(hostname -I | awk '{print $1}'))"
+echo "  (Accept the self-signed certificate warning on first visit.)"
 echo ""
 info "Useful commands:"
 echo "  View logs:   docker compose -f ${SOLARSYNC_DIR}/docker-compose.yml logs -f"
