@@ -35,7 +35,6 @@ services:
     restart: unless-stopped
     env_file: .env
     volumes:
-      - ./backend:/app
       - solarsync_data:/data
     networks:
       - solarsync
@@ -61,7 +60,6 @@ services:
       # Tell Laravel where the FastAPI backend is (internal Docker DNS)
       BACKEND_URL: http://backend:8000
     volumes:
-      - ./frontend:/var/www
       - solarsync_data:/data
       - frontend_public:/var/www/public
     networks:
