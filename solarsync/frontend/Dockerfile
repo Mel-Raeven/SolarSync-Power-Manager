@@ -4,7 +4,7 @@
 # Stage 1: Node — build frontend assets (runs on native amd64,
 #           output is architecture-independent JS/CSS)
 # ----------------------------------------------------------------
-FROM --platform=linux/amd64 node:20-alpine AS node-builder
+FROM node:20-alpine AS node-builder
 
 WORKDIR /app
 
