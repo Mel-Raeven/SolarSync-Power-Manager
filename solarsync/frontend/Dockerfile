@@ -1,4 +1,22 @@
 # syntax=docker/dockerfile:1
+
+# ----------------------------------------------------------------
+# Stage 1: Node — build frontend assets (runs on native amd64,
+#           output is architecture-independent JS/CSS)
+# ----------------------------------------------------------------
+FROM --platform=linux/amd64 node:20-alpine AS node-builder
+
+WORKDIR /app
+
+COPY package.json package-lock.json ./
+RUN npm ci
+
+COPY . .
+RUN npm run build
+
+# ----------------------------------------------------------------
+# Stage 2: PHP-FPM runtime (arm64)
+# ----------------------------------------------------------------
 FROM php:8.4-fpm
 
 # Install system dependencies
@@ -12,8 +30,6 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libsqlite3-dev \
     zip \
     unzip \
-    nodejs \
-    npm \
     && rm -rf /var/lib/apt/lists/*
 
 # Install PHP extensions required by Laravel
@@ -35,11 +51,11 @@ WORKDIR /var/www
 
 COPY . .
 
+# Copy compiled assets from the Node stage
+COPY --from=node-builder /app/public/build ./public/build
+
 # Install PHP dependencies (prod only, autoloader optimised)
 RUN composer install --no-dev --optimize-autoloader --no-interaction
-
-# Install Node dependencies and build frontend assets (Tailwind/Vite)
-RUN npm ci && npm run build
 
 # Set permissions for Laravel storage and bootstrap cache
 RUN chown -R www-data:www-data /var/www/storage /var/www/bootstrap/cache \
