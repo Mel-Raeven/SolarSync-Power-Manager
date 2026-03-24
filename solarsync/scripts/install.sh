@@ -178,10 +178,13 @@ else
   sed -i "s|^MQTT_PASSWORD=.*|MQTT_PASSWORD=${MQTT_PASSWORD}|" "${ENV_FILE}"
 
   info "Generating Mosquitto password file..."
-  docker run --rm \
-    -v "${SOLARSYNC_DIR}/mosquitto:/mosquitto" \
-    eclipse-mosquitto:2 \
-    sh -c "mosquitto_passwd -b -c /mosquitto/passwd '${MQTT_USERNAME}' '${MQTT_PASSWORD}'"
+  mkdir -p "${SOLARSYNC_DIR}/mosquitto"
+  if command -v mosquitto_passwd &>/dev/null; then
+    mosquitto_passwd -b -c "${MQTT_PASSWD_FILE}" "${MQTT_USERNAME}" "${MQTT_PASSWORD}"
+  else
+    sudo apt-get install -y mosquitto
+    mosquitto_passwd -b -c "${MQTT_PASSWD_FILE}" "${MQTT_USERNAME}" "${MQTT_PASSWORD}"
+  fi
   success "MQTT credentials auto-generated."
 fi
 
