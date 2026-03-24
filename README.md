@@ -37,7 +37,7 @@ No configuration needed. The script runs fully automatically:
 
 Open **`https://solarsync.local`** in your browser. The first time you log in with `admin` / `admin`, you will be prompted to set your own username and password before you can access anything. After that, follow the onboarding wizard to connect your energy source and smart plugs.
 
-> **Note:** `solarsync.local` works on any device on the same network that supports mDNS — this includes macOS, iOS, Android, and most Linux desktops out of the box. Windows users may need to install [Bonjour Print Services](https://support.apple.com/kb/DL999).
+> **Note:** `solarsync.local` works on any device on the same home network. macOS, iOS, Android, Linux, and Windows 10 (build 1809+) / Windows 11 all support mDNS natively — no extra software needed.
 
 ---
 
