@@ -1,8 +1,9 @@
 from __future__ import annotations
 
-from typing import List
+from typing import List, Optional
 
 from fastapi import APIRouter, Depends, HTTPException
+from pydantic import model_validator
 from sqlmodel import Session, select
 
 from core.database import get_session
@@ -11,11 +12,28 @@ from models.models import (
     HubCreate,
     HubRead,
     EnergyProvider,
+    EnergyProviderBase,
     EnergyProviderCreate,
     EnergyProviderRead,
 )
 
 router = APIRouter()
+
+
+class EnergyProviderResponse(EnergyProviderBase):
+    """EnergyProvider schema for API responses — masks the SolarEdge API key."""
+
+    id: int
+
+    @model_validator(mode="after")
+    def mask_api_key(self) -> "EnergyProviderResponse":
+        key = self.solaredge_api_key
+        if not key:
+            self.solaredge_api_key = ""
+        else:
+            visible = key[-4:] if len(key) >= 4 else key
+            self.solaredge_api_key = f"****{visible}"
+        return self
 
 
 # ── Hubs ──────────────────────────────────────────────────────────────────────
@@ -86,12 +104,14 @@ def discover_plugs(hub_id: int, session: Session = Depends(get_session)):
 # ── Energy Providers ──────────────────────────────────────────────────────────
 
 
-@router.get("/energy-providers/", response_model=List[EnergyProviderRead])
+@router.get("/energy-providers/", response_model=List[EnergyProviderResponse])
 def list_energy_providers(session: Session = Depends(get_session)):
     return session.exec(select(EnergyProvider)).all()
 
 
-@router.post("/energy-providers/", response_model=EnergyProviderRead, status_code=201)
+@router.post(
+    "/energy-providers/", response_model=EnergyProviderResponse, status_code=201
+)
 def create_energy_provider(
     provider: EnergyProviderCreate, session: Session = Depends(get_session)
 ):

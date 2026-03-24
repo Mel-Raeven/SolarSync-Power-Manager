@@ -9,15 +9,38 @@ import ast
 import enum
 import json
 import logging
+import uuid
+from datetime import datetime
 from typing import List, Optional
 
 import requests
+from sqlmodel import Session
 
+from core.database import engine
 from ics2000.Command import Command
 from ics2000.Cryptographer import decrypt
 from ics2000.Devices import Device, Dimmer
+from models.models import Setting
 
 logger = logging.getLogger(__name__)
+
+_KAKU_DEVICE_ID_KEY = "kaku_device_id"
+
+
+def _get_or_create_device_id() -> str:
+    """Return the persistent KaKu device UUID from the DB, creating it on first use."""
+    with Session(engine) as session:
+        setting = session.get(Setting, _KAKU_DEVICE_ID_KEY)
+        if setting is not None:
+            return setting.value
+        new_id = str(uuid.uuid4())
+        session.add(
+            Setting(key=_KAKU_DEVICE_ID_KEY, value=new_id, updated_at=datetime.utcnow())
+        )
+        session.commit()
+        logger.info("Generated new KaKu device ID: %s", new_id)
+        return new_id
+
 
 _BASE_URL = "https://trustsmartcloud2.com/ics2000_api"
 
@@ -37,6 +60,7 @@ class Hub:
         self._home_id: int = -1
         self._connected: bool = False
         self._devices: List[Device] = []
+        self._device_unique_id: str = _get_or_create_device_id()
         self._login()
         self._pull_devices()
 
@@ -51,7 +75,7 @@ class Hub:
                 "email": self._email,
                 "mac": self.mac.replace(":", ""),
                 "password_hash": self._password,
-                "device_unique_id": "android",
+                "device_unique_id": self._device_unique_id,
                 "platform": "Android",
             },
             timeout=10,
@@ -130,7 +154,7 @@ class Hub:
                 "email": self._email,
                 "mac": self.mac.replace(":", ""),
                 "password_hash": self._password,
-                "device_unique_id": "android",
+                "device_unique_id": self._device_unique_id,
                 "command": command,
             },
             timeout=10,

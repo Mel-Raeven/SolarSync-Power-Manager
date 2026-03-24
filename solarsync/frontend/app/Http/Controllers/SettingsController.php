@@ -8,19 +8,26 @@ use Illuminate\Support\Facades\Http;
 class SettingsController extends Controller
 {
     private string $apiBase;
+    private string $apiKey;
 
     public function __construct()
     {
         $this->apiBase = rtrim(config('services.solarsync.api_base', 'http://backend:8000'), '/');
+        $this->apiKey  = config('services.solarsync.internal_api_key', '');
+    }
+
+    private function apiClient()
+    {
+        return Http::withHeaders(['X-Internal-API-Key' => $this->apiKey]);
     }
 
     // ── Page ──────────────────────────────────────────────────────────────────
 
     public function index()
     {
-        $hubsResponse      = Http::timeout(5)->get("{$this->apiBase}/api/hubs");
-        $providersResponse = Http::timeout(5)->get("{$this->apiBase}/api/hubs/energy-providers");
-        $settingsResponse  = Http::timeout(5)->get("{$this->apiBase}/api/settings");
+        $hubsResponse      = $this->apiClient()->timeout(5)->get("{$this->apiBase}/api/hubs");
+        $providersResponse = $this->apiClient()->timeout(5)->get("{$this->apiBase}/api/hubs/energy-providers");
+        $settingsResponse  = $this->apiClient()->timeout(5)->get("{$this->apiBase}/api/settings");
 
         $hubs      = $hubsResponse->successful()      ? ($hubsResponse->json()      ?? []) : [];
         $providers = $providersResponse->successful() ? ($providersResponse->json() ?? []) : [];
@@ -60,14 +67,14 @@ class SettingsController extends Controller
             $payload['password_hash'] = $validated['password'];
         }
 
-        Http::timeout(5)->put("{$this->apiBase}/api/hubs/{$id}", $payload);
+        $this->apiClient()->timeout(5)->put("{$this->apiBase}/api/hubs/{$id}", $payload);
 
         return redirect()->route('settings.index')->with('success', 'Hub updated successfully.');
     }
 
     public function deleteHub(int $id)
     {
-        Http::timeout(5)->delete("{$this->apiBase}/api/hubs/{$id}");
+        $this->apiClient()->timeout(5)->delete("{$this->apiBase}/api/hubs/{$id}");
 
         return redirect()->route('settings.index')->with('success', 'Hub removed.');
     }
@@ -95,7 +102,7 @@ class SettingsController extends Controller
             $config['topic'] = $validated['topic'] ?? '';
         }
 
-        Http::timeout(5)->post("{$this->apiBase}/api/hubs/energy-providers", [
+        $this->apiClient()->timeout(5)->post("{$this->apiBase}/api/hubs/energy-providers", [
             'name'          => $validated['name'],
             'provider_type' => $validated['provider_type'],
             'config'        => $config,
@@ -106,7 +113,7 @@ class SettingsController extends Controller
 
     public function deleteEnergyProvider(int $id)
     {
-        Http::timeout(5)->delete("{$this->apiBase}/api/hubs/energy-providers/{$id}");
+        $this->apiClient()->timeout(5)->delete("{$this->apiBase}/api/hubs/energy-providers/{$id}");
 
         return redirect()->route('settings.index')->with('success', 'Energy provider removed.');
     }
@@ -115,12 +122,14 @@ class SettingsController extends Controller
 
     public function updateSetting(Request $request)
     {
+        $allowedKeys = ['poll_interval_seconds', 'energy_source', 'solaredge_api_key', 'solaredge_site_id', 'last_run'];
+
         $validated = $request->validate([
-            'key'   => ['required', 'string', 'max:100'],
+            'key'   => ['required', 'string', 'max:100', 'in:' . implode(',', $allowedKeys)],
             'value' => ['required', 'string'],
         ]);
 
-        Http::timeout(5)->post("{$this->apiBase}/api/settings", [
+        $this->apiClient()->timeout(5)->post("{$this->apiBase}/api/settings", [
             'key'   => $validated['key'],
             'value' => $validated['value'],
         ]);

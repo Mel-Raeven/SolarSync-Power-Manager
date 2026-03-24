@@ -8,24 +8,31 @@ use Illuminate\Support\Facades\Http;
 class DashboardController extends Controller
 {
     private string $apiBase;
+    private string $apiKey;
 
     public function __construct()
     {
         $this->apiBase = rtrim(config('services.solarsync.api_base', 'http://backend:8000'), '/');
+        $this->apiKey  = config('services.solarsync.internal_api_key', '');
+    }
+
+    private function apiClient()
+    {
+        return Http::withHeaders(['X-Internal-API-Key' => $this->apiKey]);
     }
 
     public function index()
     {
         // Fetch power status
-        $statusResponse = Http::timeout(5)->get("{$this->apiBase}/api/power/status");
+        $statusResponse = $this->apiClient()->timeout(5)->get("{$this->apiBase}/api/power/status");
         $powerStatus = $statusResponse->successful() ? $statusResponse->json() : null;
 
         // Fetch appliances
-        $appliancesResponse = Http::timeout(5)->get("{$this->apiBase}/api/appliances");
+        $appliancesResponse = $this->apiClient()->timeout(5)->get("{$this->apiBase}/api/appliances");
         $appliances = $appliancesResponse->successful() ? ($appliancesResponse->json() ?? []) : [];
 
         // Fetch 24h history for chart
-        $historyResponse = Http::timeout(5)->get("{$this->apiBase}/api/power/history", ['hours' => 24]);
+        $historyResponse = $this->apiClient()->timeout(5)->get("{$this->apiBase}/api/power/history", ['hours' => 24]);
         $history = $historyResponse->successful() ? ($historyResponse->json() ?? []) : [];
 
         return view('dashboard', [
@@ -39,7 +46,7 @@ class DashboardController extends Controller
 
     public function status()
     {
-        $response = Http::timeout(5)->get("{$this->apiBase}/api/power/status");
+        $response = $this->apiClient()->timeout(5)->get("{$this->apiBase}/api/power/status");
 
         if ($response->successful()) {
             return response()->json($response->json());
@@ -59,7 +66,7 @@ class DashboardController extends Controller
             'override_on' => ['nullable', 'boolean'],
         ]);
 
-        $response = Http::timeout(5)->post(
+        $response = $this->apiClient()->timeout(5)->post(
             "{$this->apiBase}/api/appliances/{$id}/override",
             ['override_on' => $validated['override_on'] ?? null]
         );

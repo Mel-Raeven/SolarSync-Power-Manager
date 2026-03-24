@@ -15,7 +15,8 @@ return [
     */
 
     'solarsync' => [
-        'api_base' => env('API_BASE_URL', 'http://backend:8000'),
+        'api_base'        => env('API_BASE_URL', 'http://backend:8000'),
+        'internal_api_key' => env('INTERNAL_API_KEY', ''),
     ],
 
     'postmark' => [

@@ -124,6 +124,47 @@ else
 fi
 
 # --------------------------------------------------------------------------
+# 5b. Generate Mosquitto password file (if not already present)
+# --------------------------------------------------------------------------
+MQTT_PASSWD_FILE="${SOLARSYNC_DIR}/mosquitto/passwd"
+
+# Source MQTT credentials from .env (ignore errors for unset vars)
+MQTT_USERNAME=""
+MQTT_PASSWORD=""
+if [[ -f "${ENV_FILE}" ]]; then
+  MQTT_USERNAME=$(grep -E '^MQTT_USERNAME=' "${ENV_FILE}" | cut -d= -f2- | tr -d '"' || true)
+  MQTT_PASSWORD=$(grep -E '^MQTT_PASSWORD=' "${ENV_FILE}" | cut -d= -f2- | tr -d '"' || true)
+fi
+
+if [[ -f "${MQTT_PASSWD_FILE}" ]]; then
+  info "Mosquitto password file already present — skipping."
+else
+  if [[ -z "${MQTT_USERNAME}" || "${MQTT_USERNAME}" == "CHANGE_ME" ]]; then
+    warn "MQTT_USERNAME is not set in ${ENV_FILE}."
+    read -rp "  MQTT username [mqtt]: " MQTT_USERNAME
+    MQTT_USERNAME="${MQTT_USERNAME:-mqtt}"
+    sed -i "s|^MQTT_USERNAME=.*|MQTT_USERNAME=${MQTT_USERNAME}|" "${ENV_FILE}"
+  fi
+
+  if [[ -z "${MQTT_PASSWORD}" || "${MQTT_PASSWORD}" == "CHANGE_ME" ]]; then
+    read -rsp "  MQTT password: " MQTT_PASSWORD
+    echo ""
+    if [[ -z "${MQTT_PASSWORD}" ]]; then
+      error "MQTT_PASSWORD cannot be empty."
+    fi
+    sed -i "s|^MQTT_PASSWORD=.*|MQTT_PASSWORD=${MQTT_PASSWORD}|" "${ENV_FILE}"
+  fi
+
+  info "Generating Mosquitto password file at ${MQTT_PASSWD_FILE}..."
+  # Use the official Mosquitto Docker image so mosquitto_passwd is always available
+  docker run --rm \
+    -v "${SOLARSYNC_DIR}/mosquitto:/mosquitto" \
+    eclipse-mosquitto:2 \
+    sh -c "mosquitto_passwd -b -c /mosquitto/passwd '${MQTT_USERNAME}' '${MQTT_PASSWORD}'"
+  success "Mosquitto password file created."
+fi
+
+# --------------------------------------------------------------------------
 # 6. Pull images and start the stack
 # --------------------------------------------------------------------------
 info "Starting SolarSync stack (production mode)..."

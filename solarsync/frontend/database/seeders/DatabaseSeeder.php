@@ -16,8 +16,12 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        $username = env('SOLARSYNC_USERNAME', 'admin');
-        $password = env('SOLARSYNC_PASSWORD', 'changeme');
+        $username = env('SOLARSYNC_USERNAME') ?? throw new \RuntimeException(
+            'SOLARSYNC_USERNAME is not set in .env — set it before running db:seed.'
+        );
+        $password = env('SOLARSYNC_PASSWORD') ?? throw new \RuntimeException(
+            'SOLARSYNC_PASSWORD is not set in .env — set it before running db:seed.'
+        );
 
         User::updateOrCreate(
             ['name' => $username],

@@ -8,10 +8,17 @@ use Illuminate\Support\Facades\Http;
 class OnboardingController extends Controller
 {
     private string $apiBase;
+    private string $apiKey;
 
     public function __construct()
     {
         $this->apiBase = rtrim(config('services.solarsync.api_base', 'http://backend:8000'), '/');
+        $this->apiKey  = config('services.solarsync.internal_api_key', '');
+    }
+
+    private function apiClient()
+    {
+        return Http::withHeaders(['X-Internal-API-Key' => $this->apiKey]);
     }
 
     // ── Step routing ─────────────────────────────────────────────────────────
@@ -66,17 +73,17 @@ class OnboardingController extends Controller
         ]);
 
         // Persist settings to API
-        Http::post("{$this->apiBase}/api/settings", [
+        $this->apiClient()->post("{$this->apiBase}/api/settings", [
             'key' => 'energy_source',
             'value' => $validated['energy_source'],
         ]);
 
         if (! empty($validated['solaredge_api_key'])) {
-            Http::post("{$this->apiBase}/api/settings", [
+            $this->apiClient()->post("{$this->apiBase}/api/settings", [
                 'key' => 'solaredge_api_key',
                 'value' => $validated['solaredge_api_key'],
             ]);
-            Http::post("{$this->apiBase}/api/settings", [
+            $this->apiClient()->post("{$this->apiBase}/api/settings", [
                 'key' => 'solaredge_site_id',
                 'value' => $validated['solaredge_site_id'],
             ]);
@@ -106,7 +113,7 @@ class OnboardingController extends Controller
         ]);
 
         // Create hub via API
-        $response = Http::post("{$this->apiBase}/api/hubs", [
+        $response = $this->apiClient()->post("{$this->apiBase}/api/hubs", [
             'name'         => 'ICS2000',
             'hub_type'     => 'ics2000',
             'mac_address'  => $validated['hub_mac'],
@@ -125,8 +132,9 @@ class OnboardingController extends Controller
 
     public function discoverPlugs(Request $request)
     {
-        $hubId = $request->input('hub_id');
-        $plugs = Http::get("{$this->apiBase}/api/hubs/{$hubId}/plugs")->json();
+        $validated = $request->validate(['hub_id' => 'required|integer|min:1']);
+        $hubId = $validated['hub_id'];
+        $plugs = $this->apiClient()->get("{$this->apiBase}/api/hubs/{$hubId}/plugs")->json();
 
         return response()->json($plugs);
     }
@@ -136,7 +144,7 @@ class OnboardingController extends Controller
     public function step4()
     {
         // Fetch hubs so user can select one for plug assignment
-        $hubs = Http::get("{$this->apiBase}/api/hubs")->json() ?? [];
+        $hubs = $this->apiClient()->get("{$this->apiBase}/api/hubs")->json() ?? [];
 
         return view('onboarding.step4-first-appliance', [
             'step' => 4,
@@ -158,7 +166,7 @@ class OnboardingController extends Controller
             'priority'      => ['nullable', 'integer', 'min:1', 'max:10'],
         ]);
 
-        Http::post("{$this->apiBase}/api/appliances", $validated);
+        $this->apiClient()->post("{$this->apiBase}/api/appliances", $validated);
 
         $this->completeStep(4);
 
@@ -169,7 +177,7 @@ class OnboardingController extends Controller
 
     private function getOnboardingState(): array
     {
-        $response = Http::get("{$this->apiBase}/api/onboarding");
+        $response = $this->apiClient()->get("{$this->apiBase}/api/onboarding");
 
         if ($response->successful()) {
             return $response->json();
@@ -180,6 +188,6 @@ class OnboardingController extends Controller
 
     private function completeStep(int $step): void
     {
-        Http::post("{$this->apiBase}/api/onboarding/step/{$step}/complete");
+        $this->apiClient()->post("{$this->apiBase}/api/onboarding/step/{$step}/complete");
     }
 }

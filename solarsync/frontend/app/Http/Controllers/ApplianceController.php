@@ -8,18 +8,25 @@ use Illuminate\Support\Facades\Http;
 class ApplianceController extends Controller
 {
     private string $apiBase;
+    private string $apiKey;
 
     public function __construct()
     {
         $this->apiBase = rtrim(config('services.solarsync.api_base', 'http://backend:8000'), '/');
+        $this->apiKey  = config('services.solarsync.internal_api_key', '');
+    }
+
+    private function apiClient()
+    {
+        return Http::withHeaders(['X-Internal-API-Key' => $this->apiKey]);
     }
 
     // ── Index ─────────────────────────────────────────────────────────────────
 
     public function index()
     {
-        $appliancesResponse = Http::get("{$this->apiBase}/api/appliances");
-        $hubsResponse       = Http::get("{$this->apiBase}/api/hubs");
+        $appliancesResponse = $this->apiClient()->get("{$this->apiBase}/api/appliances");
+        $hubsResponse       = $this->apiClient()->get("{$this->apiBase}/api/hubs");
 
         $appliances = $appliancesResponse->successful() ? $appliancesResponse->json() : [];
         $hubs       = $hubsResponse->successful()       ? $hubsResponse->json()       : [];
@@ -31,7 +38,7 @@ class ApplianceController extends Controller
 
     public function create()
     {
-        $hubsResponse = Http::get("{$this->apiBase}/api/hubs");
+        $hubsResponse = $this->apiClient()->get("{$this->apiBase}/api/hubs");
         $hubs = $hubsResponse->successful() ? $hubsResponse->json() : [];
 
         return view('appliances.create', compact('hubs'));
@@ -52,7 +59,7 @@ class ApplianceController extends Controller
             'time_window_end'    => ['nullable', 'date_format:H:i', 'required_if:schedule_mode,time_window'],
         ]);
 
-        $response = Http::post("{$this->apiBase}/api/appliances", $validated);
+        $response = $this->apiClient()->post("{$this->apiBase}/api/appliances", $validated);
 
         if ($response->failed()) {
             return redirect()->back()
@@ -68,8 +75,8 @@ class ApplianceController extends Controller
 
     public function edit(int $id)
     {
-        $applianceResponse = Http::get("{$this->apiBase}/api/appliances/{$id}");
-        $hubsResponse      = Http::get("{$this->apiBase}/api/hubs");
+        $applianceResponse = $this->apiClient()->get("{$this->apiBase}/api/appliances/{$id}");
+        $hubsResponse      = $this->apiClient()->get("{$this->apiBase}/api/hubs");
 
         if ($applianceResponse->failed()) {
             return redirect()->route('appliances.index')
@@ -97,7 +104,7 @@ class ApplianceController extends Controller
             'time_window_end'    => ['nullable', 'date_format:H:i', 'required_if:schedule_mode,time_window'],
         ]);
 
-        $response = Http::put("{$this->apiBase}/api/appliances/{$id}", $validated);
+        $response = $this->apiClient()->put("{$this->apiBase}/api/appliances/{$id}", $validated);
 
         if ($response->failed()) {
             return redirect()->back()
@@ -113,7 +120,7 @@ class ApplianceController extends Controller
 
     public function destroy(int $id)
     {
-        $response = Http::delete("{$this->apiBase}/api/appliances/{$id}");
+        $response = $this->apiClient()->delete("{$this->apiBase}/api/appliances/{$id}");
 
         if ($response->failed()) {
             return redirect()->route('appliances.index')
@@ -128,7 +135,7 @@ class ApplianceController extends Controller
 
     public function toggle(int $id)
     {
-        $response = Http::post("{$this->apiBase}/api/appliances/{$id}/toggle");
+        $response = $this->apiClient()->post("{$this->apiBase}/api/appliances/{$id}/toggle");
 
         if ($response->failed()) {
             return redirect()->back()

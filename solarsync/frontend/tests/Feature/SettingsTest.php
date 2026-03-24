@@ -140,11 +140,11 @@ class SettingsTest extends TestCase
 
     public function test_update_setting(): void
     {
-        Http::fake(['*/api/settings' => Http::response(['key' => 'poll_interval', 'value' => '300'], 200)]);
+        Http::fake(['*/api/settings' => Http::response(['key' => 'poll_interval_seconds', 'value' => '300'], 200)]);
 
         $this->actingAs($this->user)
             ->post('/settings/setting', [
-                'key'   => 'poll_interval',
+                'key'   => 'poll_interval_seconds',
                 'value' => '300',
             ])
             ->assertRedirect(route('settings.index'))
@@ -161,7 +161,17 @@ class SettingsTest extends TestCase
     public function test_update_setting_requires_value(): void
     {
         $this->actingAs($this->user)
-            ->post('/settings/setting', ['key' => 'poll_interval'])
+            ->post('/settings/setting', ['key' => 'poll_interval_seconds'])
             ->assertSessionHasErrors(['value']);
+    }
+
+    public function test_update_setting_rejects_unknown_key(): void
+    {
+        $this->actingAs($this->user)
+            ->post('/settings/setting', [
+                'key'   => 'unknown_key',
+                'value' => 'some_value',
+            ])
+            ->assertSessionHasErrors(['key']);
     }
 }
