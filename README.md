@@ -163,4 +163,6 @@ Browser ──HTTPS──► Nginx (443)
 
 ## License
 
-MIT
+Copyright (c) 2026. All rights reserved.
+
+This software is proprietary and confidential. Unauthorized copying, distribution, modification, or use of this software, in whole or in part, is strictly prohibited.

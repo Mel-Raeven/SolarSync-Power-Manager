@@ -1,0 +1,52 @@
+Copyright (c) 2026 Mel Raeven. All rights reserved.
+
+SOURCE AVAILABLE LICENSE
+
+1. DEFINITIONS
+
+   "Software" means the SolarSync Power Manager source code, documentation,
+   and associated files in this repository.
+
+   "Owner" means Mel Raeven, the sole copyright holder of the Software.
+
+   "Contributor" means any individual who submits a change, patch, pull request,
+   or other modification to the Software.
+
+2. PERMITTED USE
+
+   You are permitted to:
+   - View and read the source code for personal, educational, or evaluation purposes
+   - Fork or clone the repository solely for the purpose of submitting contributions
+     back to the Owner
+   - Run the Software locally for personal, non-commercial use
+
+3. CONTRIBUTIONS
+
+   By submitting a contribution (e.g. pull request, patch, or suggestion) to this
+   repository, you agree to assign full copyright of that contribution to the Owner.
+   The Owner may incorporate, modify, relicense, or sell contributions as part of
+   the Software without restriction or compensation to the Contributor.
+
+4. RESTRICTIONS
+
+   You may NOT, without prior written permission from the Owner:
+   - Use the Software or any part of it for commercial purposes
+   - Distribute, sublicense, or sell copies of the Software
+   - Incorporate the Software into another product or service
+   - Remove or alter any copyright notices or this license
+
+5. COMMERCIAL LICENSING
+
+   To use the Software commercially or obtain a separate license, contact the Owner
+   directly.
+
+6. NO WARRANTY
+
+   THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+   IMPLIED. THE OWNER SHALL NOT BE LIABLE FOR ANY DAMAGES ARISING FROM THE USE
+   OR INABILITY TO USE THE SOFTWARE.
+
+7. TERMINATION
+
+   Any rights granted under this license terminate automatically if you violate
+   any of its terms.
