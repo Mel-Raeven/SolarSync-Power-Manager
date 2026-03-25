@@ -37,7 +37,6 @@ app = FastAPI(
     lifespan=lifespan,
     docs_url="/docs",
     redoc_url="/redoc",
-    dependencies=[Depends(verify_api_key)],
 )
 
 # ── CORS origins ─────────────────────────────────────────────────────────────
@@ -57,11 +56,33 @@ app.add_middleware(
 
 # ── Routers ───────────────────────────────────────────────────────────────────
 
-app.include_router(appliances.router, prefix="/appliances", tags=["Appliances"])
-app.include_router(hubs.router, prefix="/hubs", tags=["Hubs"])
-app.include_router(power.router, prefix="/power", tags=["Power"])
-app.include_router(settings.router, prefix="/settings", tags=["Settings"])
-app.include_router(onboarding.router, prefix="/onboarding", tags=["Onboarding"])
+app.include_router(
+    appliances.router,
+    prefix="/appliances",
+    tags=["Appliances"],
+    dependencies=[Depends(verify_api_key)],
+)
+app.include_router(
+    hubs.router, prefix="/hubs", tags=["Hubs"], dependencies=[Depends(verify_api_key)]
+)
+app.include_router(
+    power.router,
+    prefix="/power",
+    tags=["Power"],
+    dependencies=[Depends(verify_api_key)],
+)
+app.include_router(
+    settings.router,
+    prefix="/settings",
+    tags=["Settings"],
+    dependencies=[Depends(verify_api_key)],
+)
+app.include_router(
+    onboarding.router,
+    prefix="/onboarding",
+    tags=["Onboarding"],
+    dependencies=[Depends(verify_api_key)],
+)
 
 
 # ── Health check ──────────────────────────────────────────────────────────────

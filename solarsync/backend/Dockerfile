@@ -16,7 +16,8 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY . .
 
 # Create directory for the SQLite database volume mount
-RUN mkdir -p /data
+# Use permissions 777 so the frontend (www-data) can also write to the SQLite file
+RUN mkdir -p /data && chmod 777 /data
 
 EXPOSE 8000
 

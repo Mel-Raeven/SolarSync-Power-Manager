@@ -33,6 +33,12 @@ def create_db_and_tables() -> None:
     """
     SQLModel.metadata.create_all(engine)
 
+    # Ensure the SQLite file is group/world-writable so the frontend container
+    # (running as www-data) can also write to the shared volume.
+    db_path = Path(_DB_PATH)
+    if db_path.exists():
+        db_path.chmod(0o666)
+
     # Ensure there is always exactly one OnboardingState row
     from models.models import OnboardingState  # noqa: PLC0415 (avoid circular at module level)
 
